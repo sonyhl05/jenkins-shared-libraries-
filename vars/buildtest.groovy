@@ -43,15 +43,6 @@ def stopSpringBootApp() {
     sh 'mvn spring-boot:stop'
 }
 
-def tagBuild(String tagName, String message = 'Build tagging') {
-    echo "Tagging the build with tag: ${tagName}"
-    
-    sh """
-        git tag -a ${tagName} -m '${message}'
-        git push origin ${tagName}
-    """
-}
-
 def uploadArtifact(String artifactPath) {
     echo 'Uploading artifact...'
     archiveArtifacts artifacts: artifactPath, allowEmptyArchive: true
