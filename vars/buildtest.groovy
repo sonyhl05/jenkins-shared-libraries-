@@ -1,23 +1,25 @@
-def buildProject() {
-    echo 'Building project with Maven...'
-    sh 'mvn clean package'
-}
-
 def checkoutCode() {
     echo 'Checking out code...'
     checkout scm
 }
-
-def cleanupProcesses() {
-    echo 'Cleaning up processes...'
-    sh 'pkill -f "mvn spring-boot:run" || true'
+def setupJava17() {
+    echo 'Setting up Java 17...'
+    sh 'sudo apt update'
+    sh 'sudo apt install -y openjdk-17-jdk'
+}
+def setupMaven() {
+    echo 'Setting up Maven...'
+    sh 'sudo apt install -y maven'
 }
 
-def cleanupWorkspace() {
-    echo 'Cleaning up the workspace...'
-    deleteDir() // Deletes all files in the current workspace
+def buildProject() {
+    echo 'Building project with Maven...'
+    sh 'mvn clean package'
 }
-
+def uploadArtifact(String artifactPath) {
+    echo 'Uploading artifact...'
+    archiveArtifacts artifacts: artifactPath, allowEmptyArchive: true
+}
 def runSpringBootApp() {
     echo 'Running Spring Boot application...'
     sh 'nohup mvn spring-boot:run &'
@@ -26,28 +28,6 @@ def runSpringBootApp() {
     def localIp = sh(script: "hostname -I | awk '{print \$1}'", returnStdout: true).trim()
     echo "The application is running and accessible at: http://${localIp}:8080"
 }
-
-def setupJava17() {
-    echo 'Setting up Java 17...'
-    sh 'sudo apt update'
-    sh 'sudo apt install -y openjdk-17-jdk'
-}
-
-def setupMaven() {
-    echo 'Setting up Maven...'
-    sh 'sudo apt install -y maven'
-}
-
-def stopSpringBootApp() {
-    echo 'Gracefully stopping the Spring Boot application...'
-    sh 'mvn spring-boot:stop'
-}
-
-def uploadArtifact(String artifactPath) {
-    echo 'Uploading artifact...'
-    archiveArtifacts artifacts: artifactPath, allowEmptyArchive: true
-}
-
 def validateAppRunning() {
     echo 'Validating that the app is running...'
     def response = sh(script: 'curl --write-out "%{http_code}" --silent --output /dev/null http://localhost:8080', returnStdout: true).trim()
@@ -57,4 +37,17 @@ def validateAppRunning() {
         echo "The app failed to start. HTTP response code: ${response}"
         error("The app did not start correctly!")
     }
+}
+def stopSpringBootApp() {
+    echo 'Gracefully stopping the Spring Boot application...'
+    sh 'mvn spring-boot:stop'
+}
+def cleanupProcesses() {
+    echo 'Cleaning up processes...'
+    sh 'pkill -f "mvn spring-boot:run" || true'
+}
+
+def cleanupWorkspace() {
+    echo 'Cleaning up the workspace...'
+    deleteDir() // Deletes all files in the current workspace
 }
